@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ ! "$DB_PASSWORD" ]
+then
+	echo "Please set $DB_PASSWORD" 1>&2
+	exit 1
+fi
+
 N="${1:-1}"
 
 T="$(date +%s)"
