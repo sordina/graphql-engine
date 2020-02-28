@@ -1,0 +1,1 @@
+hasura-cloud-benchmark-1.cqllbkrqnm9a.ap-south-1.rds.amazonaws.com

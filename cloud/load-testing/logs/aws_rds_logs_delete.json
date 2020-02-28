@@ -1,0 +1,82 @@
+{
+    "DBInstance": {
+        "DBInstanceIdentifier": "hasura-cloud-benchmark-1",
+        "DBInstanceClass": "db.m5.xlarge",
+        "Engine": "postgres",
+        "DBInstanceStatus": "deleting",
+        "MasterUsername": "master",
+        "Endpoint": {
+            "Address": "hasura-cloud-benchmark-1.cqllbkrqnm9a.ap-south-1.rds.amazonaws.com",
+            "Port": 5432,
+            "HostedZoneId": "Z2VFMSZA74J7XZ"
+        },
+        "AllocatedStorage": 20,
+        "InstanceCreateTime": "2020-02-28T07:28:58.499Z",
+        "PreferredBackupWindow": "21:17-21:47",
+        "BackupRetentionPeriod": 1,
+        "DBSecurityGroups": [],
+        "VpcSecurityGroups": [
+            {
+                "VpcSecurityGroupId": "sg-1e750376",
+                "Status": "active"
+            }
+        ],
+        "DBParameterGroups": [
+            {
+                "DBParameterGroupName": "default.postgres11",
+                "ParameterApplyStatus": "in-sync"
+            }
+        ],
+        "AvailabilityZone": "ap-south-1a",
+        "DBSubnetGroup": {
+            "DBSubnetGroupName": "default",
+            "DBSubnetGroupDescription": "default",
+            "VpcId": "vpc-e9aabe80",
+            "SubnetGroupStatus": "Complete",
+            "Subnets": [
+                {
+                    "SubnetIdentifier": "subnet-c2e6ac8f",
+                    "SubnetAvailabilityZone": {
+                        "Name": "ap-south-1b"
+                    },
+                    "SubnetStatus": "Active"
+                },
+                {
+                    "SubnetIdentifier": "subnet-4d809f24",
+                    "SubnetAvailabilityZone": {
+                        "Name": "ap-south-1a"
+                    },
+                    "SubnetStatus": "Active"
+                }
+            ]
+        },
+        "PreferredMaintenanceWindow": "thu:12:35-thu:13:05",
+        "PendingModifiedValues": {},
+        "LatestRestorableTime": "2020-02-28T07:55:19Z",
+        "MultiAZ": false,
+        "EngineVersion": "11.5",
+        "AutoMinorVersionUpgrade": true,
+        "ReadReplicaDBInstanceIdentifiers": [],
+        "LicenseModel": "postgresql-license",
+        "OptionGroupMemberships": [
+            {
+                "OptionGroupName": "default:postgres-11",
+                "Status": "in-sync"
+            }
+        ],
+        "PubliclyAccessible": true,
+        "StorageType": "gp2",
+        "DbInstancePort": 0,
+        "StorageEncrypted": false,
+        "DbiResourceId": "db-SXQG7F37BP35RIVCX3B4ABYCCU",
+        "CACertificateIdentifier": "rds-ca-2019",
+        "DomainMemberships": [],
+        "CopyTagsToSnapshot": false,
+        "MonitoringInterval": 0,
+        "DBInstanceArn": "arn:aws:rds:ap-south-1:278348662807:db:hasura-cloud-benchmark-1",
+        "IAMDatabaseAuthenticationEnabled": false,
+        "PerformanceInsightsEnabled": false,
+        "DeletionProtection": false,
+        "AssociatedRoles": []
+    }
+}
