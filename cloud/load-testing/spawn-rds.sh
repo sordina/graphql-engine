@@ -8,6 +8,11 @@ fi
 
 N="${1:-1}"
 
+if [ ! "$N" ]
+then
+	echo "Defaulting instances to $N" 1>&2
+fi
+
 T="$(date +%s)"
 
 echo "spawning $N rds instances"
