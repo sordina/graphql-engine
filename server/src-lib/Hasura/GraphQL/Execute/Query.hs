@@ -34,6 +34,8 @@ import           Hasura.RQL.Types
 import           Hasura.SQL.Types
 import           Hasura.SQL.Value
 
+import qualified Debug.Trace
+
 type PlanVariables = Map.HashMap G.Variable Int
 
 -- | The value is (Q.PrepArg, PGScalarValue) because we want to log the human-readable value of the
@@ -193,7 +195,9 @@ convertQuerySelSet
   -> m (LazyRespTx, Maybe ReusableQueryPlan, GeneratedSqlMap)
 convertQuerySelSet initialReusability fields = do
   usrVars <- asks (userVars . getter)
-  (fldPlans, finalReusability) <- runReusabilityTWith initialReusability $
+  (fldPlans, finalReusability) <- Debug.Trace.trace ("convertQuerySelSet usrVars: " ++ show usrVars
+                                                    ++ ", Fields: " ++ show fields)
+                                                    $ runReusabilityTWith initialReusability $
     forM (toList fields) $ \fld -> do
       fldPlan <- case V._fName fld of
         "__type"     -> fldPlanFromJ <$> R.typeR fld
@@ -211,14 +215,15 @@ convertQuerySelSet initialReusability fields = do
   pure (tx, reusablePlan, sql)
 
 -- use the existing plan and new variables to create a pg query
-queryOpFromPlan
+queryOpFromPlan 
   :: (MonadError QErr m)
   => UserVars
   -> Maybe GH.VariableValues
   -> ReusableQueryPlan
   -> m (LazyRespTx, GeneratedSqlMap)
 queryOpFromPlan usrVars varValsM (ReusableQueryPlan varTypes fldPlans) = do
-  validatedVars <- GV.validateVariablesForReuse varTypes varValsM
+  validatedVars <-
+    Debug.Trace.trace ("queryOpFromPlan varValsM: \n" ++ show varValsM ++ "\nvarTypes: \n" ++ show varTypes) $ GV.validateVariablesForReuse varTypes varValsM
   -- generate the SQL and prepared vars or the bytestring
   resolved <- forM fldPlans $ \(alias, fldPlan) ->
     (alias,) <$> case fldPlan of

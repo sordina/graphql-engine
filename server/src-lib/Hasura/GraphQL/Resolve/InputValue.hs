@@ -29,6 +29,7 @@ import           Hasura.Prelude
 import qualified Language.GraphQL.Draft.Syntax  as G
 
 import qualified Hasura.RQL.Types               as RQL
+import qualified Debug.Trace
 
 import           Hasura.GraphQL.Resolve.Context
 import           Hasura.GraphQL.Validate.Types
@@ -82,7 +83,7 @@ asPGColumnTypeAndValueM
   :: (MonadReusability m, MonadError QErr m)
   => AnnInpVal
   -> m (PGColumnType, WithScalarType (Maybe (OpaqueValue PGScalarValue)))
-asPGColumnTypeAndValueM v = do
+asPGColumnTypeAndValueM v = Debug.Trace.trace ("asPGColumnTypeAndValueM v: " ++ show v) do
   (columnType, scalarValueM) <- case _aivValue v of
     AGScalar colTy val -> pure (PGColumnScalar colTy, WithScalarType colTy val)
     AGEnum _ (AGEReference reference maybeValue) -> do
@@ -95,7 +96,7 @@ asPGColumnTypeAndValueM v = do
     -- whether the result is 'Nothing' or 'Just', which would change the generated query, so we have
     -- to unconditionally mark the query non-reusable.
     | G.isNullable (_aivType v) -> markNotReusable
-    | otherwise                 -> recordVariableUse variableName columnType
+    | otherwise                 -> recordVariableUse variableName columnType Nothing
 
   let isVariable = isJust $ _aivVariable v
   pure (columnType, fmap (flip OpaqueValue isVariable) <$> scalarValueM)

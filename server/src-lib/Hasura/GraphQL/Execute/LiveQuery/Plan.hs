@@ -25,6 +25,8 @@ module Hasura.GraphQL.Execute.LiveQuery.Plan
 
 import           Hasura.Prelude
 
+import qualified Debug.Trace
+
 import qualified Data.Aeson.Casing                      as J
 import qualified Data.Aeson.Extended                    as J
 import qualified Data.Aeson.TH                          as J
@@ -283,7 +285,7 @@ reuseLiveQueryPlan
   -> m LiveQueryPlan
 reuseLiveQueryPlan pgExecCtx sessionVars queryVars reusablePlan = do
   let ReusableLiveQueryPlan parameterizedPlan syntheticVars queryVarTypes = reusablePlan
-  annVarVals <- GV.validateVariablesForReuse queryVarTypes queryVars
+  annVarVals <- Debug.Trace.trace "reuseLiveQueryPlan" $ GV.validateVariablesForReuse queryVarTypes queryVars
   validatedVars <- validateVariables pgExecCtx annVarVals
   pure $ LiveQueryPlan parameterizedPlan (CohortVariables sessionVars validatedVars syntheticVars)
 

@@ -24,6 +24,10 @@ import           Control.Exception                      (try)
 import           Control.Lens
 import           Data.Has
 
+import qualified Debug.Trace
+import qualified Hasura.Db as Db
+import qualified Data.ByteString.Lazy.Char8
+
 import qualified Data.Aeson                             as J
 import qualified Data.CaseInsensitive                   as CI
 import qualified Data.HashMap.Strict                    as Map
@@ -190,36 +194,57 @@ getResolvedExecPlan
   -> [N.Header]
   -> GQLReqUnparsed
   -> m (Telem.CacheHit, ExecPlanResolved)
-getResolvedExecPlan pgExecCtx planCache userInfo sqlGenCtx
-  enableAL sc scVer httpManager reqHeaders reqUnparsed = do
-  planM <- liftIO $ EP.getPlan scVer (userRole userInfo)
-           opNameM queryStr planCache
+getResolvedExecPlan pgExecCtx planCache userInfo sqlGenCtx enableAL sc scVer httpManager reqHeaders reqUnparsed = do
+  planM <- liftIO $ EP.getPlan scVer (userRole userInfo) opNameM queryStr planCache
   let usrVars = userVars userInfo
   case planM of
     -- plans are only for queries and subscriptions
     Just plan -> (Telem.Hit,) . GExPHasura <$> case plan of
       EP.RPQuery queryPlan -> do
-        (tx, genSql) <- EQ.queryOpFromPlan usrVars queryVars queryPlan
+        (tx, genSql) <- Debug.Trace.trace ("getResolvedExecPlan userInfo: \n" ++ show userInfo
+                                            ++ "\n usrVars: \n" ++ show usrVars
+                                            ++ "\n queryVars: \n" ++ show queryVars
+                                            ++ "\n queryPlan: \n" ++ show (J.toJSON queryPlan)) $
+          EQ.queryOpFromPlan usrVars queryVars queryPlan
         return $ ExOpQuery tx (Just genSql)
       EP.RPSubs subsPlan ->
         ExOpSubs <$> EL.reuseLiveQueryPlan pgExecCtx usrVars queryVars subsPlan
     Nothing -> (Telem.Miss,) <$> noExistingPlan
   where
     GQLReq opNameM queryStr queryVars = reqUnparsed
-    addPlanToCache plan =
-      liftIO $ EP.addPlan scVer (userRole userInfo)
-      opNameM queryStr plan planCache
+    addPlanToCache plan = do
+      liftIO do
+        putStrLn "Adding plan to cache, queryStr:"
+        print queryStr
+        putStrLn "Adding plan to cache, plan:"
+        Data.ByteString.Lazy.Char8.putStrLn $ J.encode plan
+      liftIO $ EP.addPlan scVer (userRole userInfo) opNameM queryStr plan planCache
     noExistingPlan = do
+      liftIO do
+        putStrLn "noExistingPlan"
       req <- toParsed reqUnparsed
+      liftIO do
+        putStrLn "Req:"
+        print req
       (partialExecPlan, queryReusability) <- runReusabilityT $
         getExecPlanPartial userInfo sc enableAL req
+      liftIO do
+        putStrLn "queryReusability result from runReusabilityT"
+        print queryReusability
       forM partialExecPlan $ \(gCtx, rootSelSet) ->
         case rootSelSet of
           VQ.RMutation selSet ->
             ExOpMutation <$> getMutOp gCtx sqlGenCtx userInfo httpManager reqHeaders selSet
           VQ.RQuery selSet -> do
+            liftIO do
+              putStrLn "VQ.RQuery in rootSelSet in getResolvedExecPlan, selSet:"
+              print selSet
+              -- putStrLn "VQ.RQuery in rootSelSet in getResolvedExecPlan, gCtx:"
+              -- print gCtx - Not possible
             (queryTx, plan, genSql) <- getQueryOp gCtx sqlGenCtx userInfo queryReusability selSet
             traverse_ (addPlanToCache . EP.RPQuery) plan
+            -- TODO: testing recursive call to hopefully fetch from the cache on every request
+            -- getResolvedExecPlan pgExecCtx planCache userInfo sqlGenCtx enableAL sc scVer httpManager reqHeaders reqUnparsed
             return $ ExOpQuery queryTx (Just genSql)
           VQ.RSubscription fld -> do
             (lqOp, plan) <- getSubsOp pgExecCtx gCtx sqlGenCtx userInfo queryReusability fld

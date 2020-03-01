@@ -18,6 +18,9 @@ module Hasura.GraphQL.Validate
 import           Hasura.Prelude
 
 import           Data.Has
+import qualified Data.Aeson as J
+
+import Debug.Trace
 
 import qualified Data.HashMap.Strict                    as Map
 import qualified Data.HashSet                           as HS
@@ -121,15 +124,22 @@ validateVariablesForReuse (ReusableVariableTypes varTypes) varValsM =
     unless (null unexpectedVars) $
       throwVE $ "unexpected variables: " <> showVars unexpectedVars
 
-    flip Map.traverseWithKey varTypes $ \varName varType ->
-      withPathK (G.unName $ G.unVariable varName) $ do
-        varVal <- onNothing (Map.lookup varName varVals) $
-          throwVE "expected a value for non-nullable variable"
-          -- TODO: we don't have the graphql type
-          -- <> " of type: " <> T.pack (show varType)
-        parsePGScalarValue varType varVal
-    where
-      varVals = fromMaybe Map.empty varValsM
+    trace ("varTypes: " ++ show varTypes) $
+      flip Map.traverseWithKey varTypes $ \varName (varType, varDefault) ->
+        withPathK (G.unName $ G.unVariable varName) $ do
+          varVal <- onNothing (Map.lookup varName varVals) $
+            trace ("varType: " ++ show varType) $
+            trace ("varVals: " ++ show varVals) $
+            trace ("varDefault: " ++ show varDefault) $
+            case varDefault of
+              Just d  -> return (J.toJSON d)
+              Nothing -> throwVE "expected a value for non-nullable variable"
+            -- TODO: we don't have the graphql type
+            -- <> " of type: " <> T.pack (show varType)
+          trace ("Variable: " ++ show varVal) $
+            parsePGScalarValue varType varVal
+      where
+        varVals = fromMaybe Map.empty varValsM
 
 validateFrag
   :: (MonadError QErr m, MonadReader r m, Has TypeMap r)

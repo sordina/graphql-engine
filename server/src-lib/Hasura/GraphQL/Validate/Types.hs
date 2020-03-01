@@ -88,6 +88,9 @@ import qualified Data.Text                     as T
 import qualified Language.GraphQL.Draft.Syntax as G
 import qualified Language.GraphQL.Draft.TH     as G
 import qualified Language.Haskell.TH.Syntax    as TH
+import qualified Language.GraphQL.Draft.Printer.Text ()
+
+import qualified Data.Scientific
 
 import           Control.Lens                  (makePrisms)
 
@@ -775,10 +778,41 @@ stripTypenames = map filterExecDef
           in Just $ G.SelectionField  f{G._fSelectionSet = newSelset}
       _                  -> Just s
 
+{-
+instance J.ToJSON G.StringValue
+instance J.ToJSON (G.ListValueG G.ValueConst)
+instance Generic (G.ObjectValueG G.ValueConst)
+instance J.ToJSON (G.ObjectValueG G.ValueConst)
+instance J.ToJSON G.ValueConst
+-}
+
+instance J.ToJSON G.ValueConst where
+  toJSON v = case v of
+    G.VCInt     i -> J.Number (Data.Scientific.scientific (fromIntegral i) 0)
+    G.VCFloat   f -> J.Number (realToFrac f)
+    G.VCString  s -> J.String (G.unStringValue s)
+    G.VCBoolean b -> J.Bool b
+    G.VCNull      -> J.Null
+    G.VCList ls   -> J.toJSON (G.unListValue ls)
+    G.VCObject o  -> J.object $ (error "oh no v1!") o
+    G.VCEnum e    -> error "oh no v2!"
+
+{-
+  data ValueConst
+  = VCInt !Int32
+  | VCFloat !Double
+  | VCString !StringValue
+  | VCBoolean !Bool
+  | VCNull
+  | VCEnum !EnumValue
+  | VCList !ListValueC
+  | VCObject !ObjectValueC
+-}
+
 -- | Used by 'Hasura.GraphQL.Validate.validateVariablesForReuse' to parse new sets of variables for
 -- reusable query plans; see also 'QueryReusability'.
 newtype ReusableVariableTypes
-  = ReusableVariableTypes { unReusableVarTypes :: Map.HashMap G.Variable RQL.PGColumnType }
+  = ReusableVariableTypes { unReusableVarTypes :: Map.HashMap G.Variable (RQL.PGColumnType, Maybe G.DefaultValue) }
   deriving (Show, Eq, Semigroup, Monoid, J.ToJSON)
 type ReusableVariableValues = Map.HashMap G.Variable (WithScalarType PGScalarValue)
 
@@ -813,19 +847,19 @@ instance Monoid QueryReusability where
   mempty = Reusable mempty
 
 class (Monad m) => MonadReusability m where
-  recordVariableUse :: G.Variable -> RQL.PGColumnType -> m ()
+  recordVariableUse :: G.Variable -> RQL.PGColumnType -> Maybe G.DefaultValue -> m ()
   markNotReusable :: m ()
 
 instance (MonadReusability m) => MonadReusability (ReaderT r m) where
-  recordVariableUse a b = lift $ recordVariableUse a b
+  recordVariableUse a b c = lift $ recordVariableUse a b c
   markNotReusable = lift markNotReusable
 
 newtype ReusabilityT m a = ReusabilityT { unReusabilityT :: StateT QueryReusability m a }
   deriving (Functor, Applicative, Monad, MonadError e, MonadReader r, MonadIO)
 
 instance (Monad m) => MonadReusability (ReusabilityT m) where
-  recordVariableUse varName varType = ReusabilityT $
-    modify' (<> Reusable (ReusableVariableTypes $ Map.singleton varName varType))
+  recordVariableUse varName varType varDefault = ReusabilityT $
+    modify' (<> Reusable (ReusableVariableTypes $ Map.singleton varName (varType, varDefault)))
   markNotReusable = ReusabilityT $ put NotReusable
 
 runReusabilityT :: ReusabilityT m a -> m (a, QueryReusability)

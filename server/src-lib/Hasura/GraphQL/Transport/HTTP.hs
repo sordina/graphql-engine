@@ -15,6 +15,8 @@ import           Hasura.Server.Context
 import           Hasura.Server.Utils                    (RequestId)
 import           Hasura.Server.Version                  (HasVersion)
 
+import qualified Debug.Trace
+
 import qualified Database.PG.Query                      as Q
 import qualified Hasura.GraphQL.Execute                 as E
 import qualified Hasura.Logging                         as L
@@ -37,7 +39,7 @@ runGQ reqId userInfo reqHdrs req = do
   let telemTransport = Telem.HTTP
   (telemTimeTot_DT, (telemCacheHit, telemLocality, (telemTimeIO_DT, telemQueryType, !resp))) <- withElapsedTime $ do
     E.ExecutionCtx _ sqlGenCtx pgExecCtx planCache sc scVer httpManager enableAL <- ask
-    (telemCacheHit, execPlan) <- E.getResolvedExecPlan pgExecCtx planCache
+    (telemCacheHit, execPlan) <- Debug.Trace.trace ("runGQ req: " ++ show req) $ E.getResolvedExecPlan pgExecCtx planCache
                 userInfo sqlGenCtx enableAL sc scVer httpManager reqHdrs req
     case execPlan of
       E.GExPHasura resolvedOp -> do
