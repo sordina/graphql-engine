@@ -1,0 +1,76 @@
+{
+    "DBInstance": {
+        "DBInstanceIdentifier": "hasura-cloud-benchmark-v2-1",
+        "DBInstanceClass": "db.m5.xlarge",
+        "Engine": "postgres",
+        "DBInstanceStatus": "creating",
+        "MasterUsername": "master",
+        "AllocatedStorage": 20,
+        "PreferredBackupWindow": "16:58-17:28",
+        "BackupRetentionPeriod": 1,
+        "DBSecurityGroups": [],
+        "VpcSecurityGroups": [
+            {
+                "VpcSecurityGroupId": "sg-0bf404f0e2975bcdc",
+                "Status": "active"
+            }
+        ],
+        "DBParameterGroups": [
+            {
+                "DBParameterGroupName": "default.postgres11",
+                "ParameterApplyStatus": "in-sync"
+            }
+        ],
+        "DBSubnetGroup": {
+            "DBSubnetGroupName": "default",
+            "DBSubnetGroupDescription": "default",
+            "VpcId": "vpc-e9aabe80",
+            "SubnetGroupStatus": "Complete",
+            "Subnets": [
+                {
+                    "SubnetIdentifier": "subnet-c2e6ac8f",
+                    "SubnetAvailabilityZone": {
+                        "Name": "ap-south-1b"
+                    },
+                    "SubnetStatus": "Active"
+                },
+                {
+                    "SubnetIdentifier": "subnet-4d809f24",
+                    "SubnetAvailabilityZone": {
+                        "Name": "ap-south-1a"
+                    },
+                    "SubnetStatus": "Active"
+                }
+            ]
+        },
+        "PreferredMaintenanceWindow": "thu:07:30-thu:08:00",
+        "PendingModifiedValues": {
+            "MasterUserPassword": "****"
+        },
+        "MultiAZ": false,
+        "EngineVersion": "11.5",
+        "AutoMinorVersionUpgrade": true,
+        "ReadReplicaDBInstanceIdentifiers": [],
+        "LicenseModel": "postgresql-license",
+        "OptionGroupMemberships": [
+            {
+                "OptionGroupName": "default:postgres-11",
+                "Status": "in-sync"
+            }
+        ],
+        "PubliclyAccessible": true,
+        "StorageType": "gp2",
+        "DbInstancePort": 0,
+        "StorageEncrypted": false,
+        "DbiResourceId": "db-DV2ZZJ3AE5BKMCQA3JCUADOCQ4",
+        "CACertificateIdentifier": "rds-ca-2019",
+        "DomainMemberships": [],
+        "CopyTagsToSnapshot": false,
+        "MonitoringInterval": 0,
+        "DBInstanceArn": "arn:aws:rds:ap-south-1:278348662807:db:hasura-cloud-benchmark-v2-1",
+        "IAMDatabaseAuthenticationEnabled": false,
+        "PerformanceInsightsEnabled": false,
+        "DeletionProtection": false,
+        "AssociatedRoles": []
+    }
+}
