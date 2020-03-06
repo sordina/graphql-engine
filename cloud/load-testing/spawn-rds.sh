@@ -8,7 +8,7 @@ fi
 
 N="${1:-1}"
 
-if [ ! "$N" ]
+if [ ! "$1" ]
 then
 	echo "Defaulting instances to $N" 1>&2
 fi
