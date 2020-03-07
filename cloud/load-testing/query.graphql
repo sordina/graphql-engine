@@ -1,0 +1,20 @@
+{ "query": "
+    query {
+      playlist_track {
+        playlist_id
+        track {
+          name
+          id
+          album {
+            id
+            title
+            artist {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+    "
+}
