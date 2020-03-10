@@ -11,5 +11,5 @@ do
   docker run -d -p "$port:8080" \
     -e HASURA_GRAPHQL_DATABASE_URL="$DB_URL" \
     -e HASURA_GRAPHQL_ENABLE_CONSOLE=true \
-    hasura/graphql-engine:latest
+    hasura/graphql-engine:v1.1.0
 done
