@@ -21,7 +21,7 @@ import qualified Test.Hspec.Runner            as Hspec
 import           Hasura.Db                    (mkPGExecCtx)
 import           Hasura.RQL.Types             (SQLGenCtx (..))
 import           Hasura.RQL.Types.Run
-import           Hasura.Server.Init           (RawConnInfo, mkConnInfo, mkRawConnInfo,
+import           Hasura.Server.Init           (RawConnInfo, mkRawConnInfo,
                                                parseRawConnInfo, runWithEnv)
 import           Hasura.Server.Migrate
 import           Hasura.Server.Version

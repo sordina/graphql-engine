@@ -1,0 +1,5 @@
+type: bulk
+args:
+- type: pg_drop_source
+  args:
+    name: src2

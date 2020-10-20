@@ -304,6 +304,18 @@ def ws_client(request, hge_ctx):
     client.teardown()
 
 @pytest.fixture(scope='class')
+def per_class_tests_sources(request, hge_ctx):
+    """
+    Set up the database state for select queries.
+    Has a class level scope, since select queries does not change database state
+    Expects either `dir()` method which provides the directory
+    with `setup.yaml` and `teardown.yaml` files
+    Or class variables `setup_files` and `teardown_files` that provides
+    the list of setup and teardown files respectively
+    """
+    yield from db_state_context(request, hge_ctx, url='/v1/metadata')
+
+@pytest.fixture(scope='class')
 def per_class_tests_db_state(request, hge_ctx):
     """
     Set up the database state for select queries.
@@ -353,15 +365,15 @@ def per_method_db_data_for_mutation_tests(request, hge_ctx, per_class_db_schema_
         False, False, False
     )
 
-def db_state_context(request, hge_ctx):
+def db_state_context(request, hge_ctx, url="/v1/query"):
     yield from db_context_with_schema_common(
         request, hge_ctx, 'setup_files', 'setup.yaml', 'teardown_files',
-        'teardown.yaml', True
+        'teardown.yaml', True, url=url
     )
 
 def db_context_with_schema_common(
     request, hge_ctx, setup_files_attr, setup_default_file,
-    teardown_files_attr, teardown_default_file, check_file_exists=True):
+    teardown_files_attr, teardown_default_file, check_file_exists=True, url="/v1/query"):
     (skip_setup, skip_teardown) = [
         request.config.getoption('--' + x)
         for x in ['skip-schema-setup', 'skip-schema-teardown']
@@ -369,13 +381,13 @@ def db_context_with_schema_common(
     yield from db_context_common(
         request, hge_ctx, setup_files_attr, setup_default_file,
         teardown_files_attr, teardown_default_file,
-        check_file_exists, skip_setup, skip_teardown
+        check_file_exists, skip_setup, skip_teardown, url=url
     )
 
 def db_context_common(
         request, hge_ctx, setup_files_attr, setup_default_file,
         teardown_files_attr, teardown_default_file,
-        check_file_exists=True, skip_setup=True, skip_teardown=True ):
+        check_file_exists=True, skip_setup=True, skip_teardown=True, url="/v1/query" ):
     def get_files(attr, default_file):
         files = getattr(request.cls, attr, None)
         if not files:
@@ -383,9 +395,9 @@ def db_context_common(
         return files
     setup = get_files(setup_files_attr, setup_default_file)
     teardown = get_files(teardown_files_attr, teardown_default_file)
-    yield from setup_and_teardown(request, hge_ctx, setup, teardown, check_file_exists, skip_setup, skip_teardown)
+    yield from setup_and_teardown(request, hge_ctx, setup, teardown, check_file_exists, skip_setup, skip_teardown, url=url)
 
-def setup_and_teardown(request, hge_ctx, setup_files, teardown_files, check_file_exists=True, skip_setup=False, skip_teardown=False):
+def setup_and_teardown(request, hge_ctx, setup_files, teardown_files, check_file_exists=True, skip_setup=False, skip_teardown=False, url="/v1/query"):
     def assert_file_exists(f):
         assert os.path.isfile(f), 'Could not find file ' + f
     if check_file_exists:
@@ -393,7 +405,7 @@ def setup_and_teardown(request, hge_ctx, setup_files, teardown_files, check_file
             run_on_elem_or_list(assert_file_exists, o)
     def v1q_f(f):
         if os.path.isfile(f):
-            st_code, resp = hge_ctx.v1q_f(f)
+            st_code, resp = hge_ctx.v1q_f(f, url=url)
             assert st_code == 200, resp
     if not skip_setup:
         run_on_elem_or_list(v1q_f, setup_files)

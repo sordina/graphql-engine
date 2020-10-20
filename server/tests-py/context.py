@@ -521,12 +521,12 @@ class HGECtx:
         conn.close()
         return res
 
-    def v1q(self, q, headers = {}):
+    def v1q(self, q, headers = {}, url = "/v1/query"):
         h = headers.copy()
         if self.hge_key is not None:
             h['X-Hasura-Admin-Secret'] = self.hge_key
         resp = self.http.post(
-            self.hge_url + "/v1/query",
+            self.hge_url + url,
             json=q,
             headers=h
         )
@@ -534,11 +534,11 @@ class HGECtx:
         # properties in the graphql spec properly
         return resp.status_code, resp.json(object_pairs_hook=OrderedDict)
 
-    def v1q_f(self, fn):
+    def v1q_f(self, fn, url="/v1/query"):
         with open(fn) as f:
             # NOTE: preserve ordering with ruamel
             yml = yaml.YAML()
-            return self.v1q(yml.load(f))
+            return self.v1q(yml.load(f), url=url)
 
     def teardown(self):
         self.http.close()
