@@ -16,7 +16,9 @@ jobs:
             dockerfile: "./server/tests-py/Dockerfile"
             repository: "sordina/graphql-engine/graphql-engine-server-tests-py" # TODO: Hasura repo
             run: |
-              cp -r ../../get-version.sh ./
+                pwd
+                ls
+                cp -r ./scripts/get-version.sh ./server/tests-py/
 
     steps:
       - name: Check out the repo
