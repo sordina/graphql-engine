@@ -1,0 +1,38 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - "metadata-separation-multi-source-tests" # TODO: add branches, etc.
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service:
+          - path: "./server/tests-py"
+            dockerfile: "./server/tests-py/Dockerfile"
+            repository: "sordina/graphql-engine/graphql-engine-server-tests-py" # TODO: Hasura repo
+            run: |
+              cp -r get-version.sh ./server/tests-py
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: dependencies
+        run: ${{ matrix.service.run }}
+
+      - name: Push Docker Image to GitHub Packages
+        uses: docker/build-push-action@v1
+        with:
+          registry: docker.pkg.github.com
+          tag_with_sha: true
+          path: ${{ matrix.service.path }}
+          dockerfile: ${{ matrix.service.dockerfile }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ matrix.service.repository }}
+
